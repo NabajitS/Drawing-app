@@ -1,17 +1,12 @@
 import { useEffect, useState } from "react"
 import Canvas from "./Canvas"
-// import {io} from "socket.io-client";
-// const ENDPOINT = "http://localhost:8000";
-// import { socket } from "./socket"
+import { socket } from "./socket"
 
-// const socket = io();
-
-//init the connection
 
 function App() {
-
-  const [inputV, setInputV] = useState('');
-  const [dd, setDD] = useState('apple')
+  const [usernameSelected, setUsernameSelected] = useState(false);
+  const [username, setUsername] = useState("");
+  const [users, setUsers] = useState([])
   // const [socket, setSocket] = useState<null | any>(null);
 
   // useEffect( () => {
@@ -40,16 +35,71 @@ function App() {
   //   }
   // }
 
+  const handleUsername = (e: any) => {
+    e.preventDefault();
+    if (username.length < 2) {
+      return
+    }
+    setUsernameSelected(true);
+    socket.auth = { username: username };
+    socket.connect();
+  }
+
+  useEffect(() => {
+    function setTotalUsers(data: any) {
+      setUsers(data)
+    }
+
+    function setNewUser(data: any) {
+      setUsers((prev: any) => prev ? [data, ...prev] : data)
+    }
+
+    //Handle username error i.e empty username
+    socket.on("connect_error", (err) => {
+      setUsernameSelected(false); // prints the message associated with the error
+      console.log(err)
+    });
+
+
+    socket.on("users", setTotalUsers)
+    socket.on("new user connected", setNewUser)
+
+    return () => {
+      socket.off('users', setTotalUsers);
+      socket.off('new user connected', setNewUser);
+    }
+
+  }, [socket])
 
   return (
     <div className="App">
-      <Canvas />
 
-      <form >
+      {
+        usernameSelected ? <Canvas /> : (
+          <div>
+            <form onSubmit={(e) => handleUsername(e)} >
+              <label>Enter Username</label>
+              <input onChange={(e: any) => setUsername(e.target.value)} value={username} type="text" />
+              <button type="submit">submit</button>
+            </form>
+          </div>
+        )
+      }
+
+      <div>
+        {
+          users.map((user: any) => (
+            <h3>{user.username}</h3>
+          ))
+        }
+      </div>
+
+
+      {/* <form >
         <input onChange={(e) => setInputV(e.target.value)} type="text" />
         <button type="submit" >submit</button>
       </form>
-      <h2>{dd}</h2>
+      <h2>{dd}</h2> */}
     </div>
   )
 }

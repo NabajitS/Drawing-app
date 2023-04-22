@@ -63,11 +63,9 @@ export default function Canvas() {
         if (!socket) return
 
         function setShapesFrontend(data: any) {
-            console.log(data)
             setShapes(data)
         }
         function setPathsFrontend(data: any) {
-            console.log(data)
             setPaths(data)
         }
 
